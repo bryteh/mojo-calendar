@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:10.6
+    container_name: booking_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASS}'
+      MYSQL_DATABASE: 'booked'
+      MYSQL_USER: 'booked_user'
+      MYSQL_PASSWORD: '${DB_PASS}'
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: librescheduling/librebooking:latest
+    container_name: booking_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+      - DB_TYPE=mysql
+      - DB_HOST=db
+      - DB_NAME=booked
+      - DB_USER=booked_user
+      - DB_PASSWORD=${DB_PASS}
+      # IMPORTANT: Leave empty for subdomain hosting (cal.mojosense.co)
+      - SCRIPT_ROOT=
+    volumes:
+      - config_data:/var/www/html/config
+      - upload_data:/var/www/html/uploads
+    # Coolify Magic: No ports needed, Coolify handles the routing via internal network
+
+volumes:
+  db_data:
+  config_data:
+  upload_data:
