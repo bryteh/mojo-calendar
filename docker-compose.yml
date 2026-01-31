@@ -19,8 +19,8 @@ services:
       retries: 5
 
   app:
-    # --- FIX IS HERE: Correct Image Name ---
-    image: librebooking/librebooking:latest 
+    # FIX: Using the specific stable version you found
+    image: librebooking/librebooking:4.0.0
     container_name: booking_app
     restart: always
     depends_on:
@@ -28,13 +28,13 @@ services:
         condition: service_healthy
     environment:
       - TZ=Asia/Kuala_Lumpur
-      # Updated Variable Names for Latest Version
       - LB_DB_HOST=db
       - LB_DB_NAME=booked
       - LB_DB_USER=booked_user
-      - LB_DB_USER_PWD=${DB_PASS} 
-      # IMPORTANT: Password to access the web installer
-      - LB_INSTALL_PWD=${DB_ROOT_PASS} 
+      - LB_DB_USER_PWD=${DB_PASS}
+      # SAFETY: Defining BOTH old and new variable names to guarantee it works
+      - LB_INSTALL_PASSWORD=${DB_ROOT_PASS}
+      - LB_INSTALL_PWD=${DB_ROOT_PASS}
       # Leave empty for subdomain hosting
       - SCRIPT_ROOT=
     volumes:
