@@ -11,7 +11,8 @@ services:
       MYSQL_USER: 'booked_user'
       MYSQL_PASSWORD: '${DB_PASS}'
     volumes:
-      - db_data:/var/lib/mysql
+      # FIX: Renamed to v2 to force a fresh database reset
+      - db_data_v2:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -19,7 +20,6 @@ services:
       retries: 5
 
   app:
-    # FIX: Using the specific stable version you found
     image: librebooking/librebooking:4.0.0
     container_name: booking_app
     restart: always
@@ -32,7 +32,7 @@ services:
       - LB_DB_NAME=booked
       - LB_DB_USER=booked_user
       - LB_DB_USER_PWD=${DB_PASS}
-      # SAFETY: Defining BOTH old and new variable names to guarantee it works
+      # INSTALL PASSWORDS (Both names for safety)
       - LB_INSTALL_PASSWORD=${DB_ROOT_PASS}
       - LB_INSTALL_PWD=${DB_ROOT_PASS}
       # Leave empty for subdomain hosting
@@ -42,6 +42,7 @@ services:
       - upload_data:/var/www/html/Web/uploads
 
 volumes:
-  db_data:
+  # FIX: Must match the service volume above
+  db_data_v2:
   config_data:
   upload_data:
