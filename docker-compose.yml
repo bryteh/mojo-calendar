@@ -3,17 +3,15 @@ version: "3.8"
 services:
   db:
     image: mariadb:10.6
-    container_name: librebooking_db
+    container_name: booking_db
     restart: unless-stopped
     environment:
-      # MariaDB initialization (runs only on first creation of the data volume)
-      MARIADB_ROOT_PASSWORD: "${DB_ROOT_PASS}"
-      MARIADB_DATABASE: "booked"
-      MARIADB_USER: "booked_user"
-      MARIADB_PASSWORD: "${DB_PASS}"
-      TZ: "Asia/Kuala_Lumpur"
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: booked
+      MYSQL_USER: booked_user
+      MYSQL_PASSWORD: ${DB_PASS}
     volumes:
-      - db_data_clean_v1:/var/lib/mysql
+      - db_data_v2:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -22,30 +20,42 @@ services:
 
   app:
     image: librebooking/librebooking:4.0.0
-    container_name: librebooking_app
+    container_name: booking_app
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      TZ: "Asia/Kuala_Lumpur"
+      TZ: Asia/Kuala_Lumpur
 
-      # LibreBooking DB connection
-      LB_DB_HOST: "db"
-      LB_DB_NAME: "booked"
-      LB_DB_USER: "booked_user"
-      LB_DB_USER_PWD: "${DB_PASS}"
+      # --- Required for Docker install flow ---
+      LB_DB_HOST: db
+      LB_DB_NAME: booked
+      LB_DB_USER: booked_user
+      LB_DB_USER_PWD: ${DB_PASS}
+      LB_INSTALL_PWD: ${DB_ROOT_PASS}
 
-      # LibreBooking installer password (set this in Coolify as LB_INSTALL_PWD)
-      LB_INSTALL_PWD: "${LB_INSTALL_PWD}"
+      # --- Strongly recommended overrides (prevents "reset" config issues) ---
+      LB_DATABASE_HOSTSPEC: db
+      LB_DATABASE_NAME: booked
+      LB_DATABASE_USER: booked_user
+      LB_DATABASE_PASSWORD: ${DB_PASS}
 
-      # Leave empty unless you are installing under a sub-path
-      SCRIPT_ROOT: ""
+      # Install wizard password in config key: install.password
+      LB_INSTALL_PASSWORD: ${DB_ROOT_PASS}
+
+      # Public URL to your /Web directory
+      LB_SCRIPT_URL: https://cal.mojosense.co/Web
+
+      # Optional but nice
+      LB_DEFAULT_TIMEZONE: Asia/Kuala_Lumpur
+
     volumes:
-      - config_data_clean_v1:/var/www/html/config
-      - upload_data_clean_v1:/var/www/html/Web/uploads
+      # IMPORTANT: LibreBooking uses /config for persistent config
+      - config_data:/config
+      - upload_data:/var/www/html/Web/uploads
 
 volumes:
-  db_data_clean_v1:
-  config_data_clean_v1:
-  upload_data_clean_v1:
+  db_data_v2:
+  config_data:
+  upload_data:
