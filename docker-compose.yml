@@ -1,48 +1,51 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
     image: mariadb:10.6
-    container_name: booking_db
-    restart: always
+    container_name: librebooking_db
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASS}'
-      MYSQL_DATABASE: 'booked'
-      MYSQL_USER: 'booked_user'
-      MYSQL_PASSWORD: '${DB_PASS}'
+      # MariaDB initialization (runs only on first creation of the data volume)
+      MARIADB_ROOT_PASSWORD: "${DB_ROOT_PASS}"
+      MARIADB_DATABASE: "booked"
+      MARIADB_USER: "booked_user"
+      MARIADB_PASSWORD: "${DB_PASS}"
+      TZ: "Asia/Kuala_Lumpur"
     volumes:
-      # FIX: Renamed to v2 to force a fresh database reset
-      - db_data_v2:/var/lib/mysql
+      - db_data_clean_v1:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   app:
     image: librebooking/librebooking:4.0.0
-    container_name: booking_app
-    restart: always
+    container_name: librebooking_app
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      - TZ=Asia/Kuala_Lumpur
-      - LB_DB_HOST=db
-      - LB_DB_NAME=booked
-      - LB_DB_USER=booked_user
-      - LB_DB_USER_PWD=${DB_PASS}
-      # INSTALL PASSWORDS (Both names for safety)
-      - LB_INSTALL_PASSWORD=${DB_ROOT_PASS}
-      - LB_INSTALL_PWD=${DB_ROOT_PASS}
-      # Leave empty for subdomain hosting
-      - SCRIPT_ROOT=
+      TZ: "Asia/Kuala_Lumpur"
+
+      # LibreBooking DB connection
+      LB_DB_HOST: "db"
+      LB_DB_NAME: "booked"
+      LB_DB_USER: "booked_user"
+      LB_DB_USER_PWD: "${DB_PASS}"
+
+      # LibreBooking installer password (set this in Coolify as LB_INSTALL_PWD)
+      LB_INSTALL_PWD: "${LB_INSTALL_PWD}"
+
+      # Leave empty unless you are installing under a sub-path
+      SCRIPT_ROOT: ""
     volumes:
-      - config_data:/var/www/html/config
-      - upload_data:/var/www/html/Web/uploads
+      - config_data_clean_v1:/var/www/html/config
+      - upload_data_clean_v1:/var/www/html/Web/uploads
 
 volumes:
-  # FIX: Must match the service volume above
-  db_data_v2:
-  config_data:
-  upload_data:
+  db_data_clean_v1:
+  config_data_clean_v1:
+  upload_data_clean_v1:
