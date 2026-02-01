@@ -25,33 +25,39 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
     environment:
       TZ: Asia/Kuala_Lumpur
 
-      # --- Required for Docker install flow ---
-      LB_DB_HOST: db
-      LB_DB_NAME: booked
-      LB_DB_USER: booked_user
-      LB_DB_USER_PWD: ${DB_PASS}
-      LB_INSTALL_PWD: ${DB_ROOT_PASS}
-
-      # --- Strongly recommended overrides (prevents "reset" config issues) ---
+      # --- Database (this is what LibreBooking reads in config.php) ---
       LB_DATABASE_HOSTSPEC: db
       LB_DATABASE_NAME: booked
       LB_DATABASE_USER: booked_user
       LB_DATABASE_PASSWORD: ${DB_PASS}
 
-      # Install wizard password in config key: install.password
+      # --- Installer ---
+      # This sets config key: settings.install.password
       LB_INSTALL_PASSWORD: ${DB_ROOT_PASS}
 
-      # Public URL to your /Web directory
+      # --- URL + Reverse proxy friendliness ---
+      # Public URL to /Web (no trailing slash)
       LB_SCRIPT_URL: https://cal.mojosense.co/Web
 
-      # Optional but nice
+      # Force correct timezone
       LB_DEFAULT_TIMEZONE: Asia/Kuala_Lumpur
 
+      # Allow public booking (fixes “Only registered users can book reservations”)
+      LB_PRIVACY_ALLOW_GUEST_RESERVATIONS: "true"
+
+      # Optional: allow self registration too (if you want)
+      # LB_REGISTRATION_ALLOW_SELF_REGISTRATION: "true"
+
+      # Helps when behind proxy (Coolify/Traefik/Nginx) so HTTPS is detected
+      # Some builds respect these; harmless if ignored.
+      HTTPS: "on"
+      HTTP_X_FORWARDED_PROTO: "https"
+
     volumes:
-      # IMPORTANT: LibreBooking uses /config for persistent config
       - config_data:/config
       - upload_data:/var/www/html/Web/uploads
 
