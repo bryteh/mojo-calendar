@@ -45,14 +45,6 @@ services:
       HTTPS: "on"
       HTTP_X_FORWARDED_PROTO: "https"
 
-    # --- THE FIX: AUTO-CORRECT CONFIG EVERY 30s ---
-    healthcheck:
-      test: ["CMD-SHELL", "sed -i \"s/'enabled' => false/'enabled' => true/g\" /config/config.php && echo 'API Enabled' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    # ---------------------------------------------
-
     volumes:
       - config_data:/config
       - upload_data:/var/www/html/Web/uploads
