@@ -26,24 +26,14 @@ services:
       db:
         condition: service_healthy
 
-  command: >
-      /bin/bash -c "
-      sleep 5;
-      sed -i \"s/'enabled' => false/'enabled' => true/g\" /config/config.php &&
-      exec apache2-foreground
-      "     
-
     environment:
       TZ: Asia/Kuala_Lumpur
-
+      
       # --- Database ---
       LB_DATABASE_HOSTSPEC: db
       LB_DATABASE_NAME: booked
       LB_DATABASE_USER: booked_user
       LB_DATABASE_PASSWORD: ${DB_PASS}
-
-      # --- API SETTINGS (ADD THIS) ---
-      LB_API_ENABLED: "true"
 
       # --- Installer ---
       LB_INSTALL_PASSWORD: ${DB_ROOT_PASS}
@@ -54,6 +44,14 @@ services:
       LB_PRIVACY_ALLOW_GUEST_RESERVATIONS: "true"
       HTTPS: "on"
       HTTP_X_FORWARDED_PROTO: "https"
+
+    # --- THE FIX: AUTO-CORRECT CONFIG EVERY 30s ---
+    healthcheck:
+      test: ["CMD-SHELL", "sed -i \"s/'enabled' => false/'enabled' => true/g\" /config/config.php && echo 'API Enabled' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # ---------------------------------------------
 
     volumes:
       - config_data:/config
