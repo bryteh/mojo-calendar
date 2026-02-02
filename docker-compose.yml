@@ -26,6 +26,13 @@ services:
       db:
         condition: service_healthy
 
+  command: >
+      /bin/bash -c "
+      sleep 5;
+      sed -i \"s/'enabled' => false/'enabled' => true/g\" /config/config.php &&
+      exec apache2-foreground
+      "     
+
     environment:
       TZ: Asia/Kuala_Lumpur
 
